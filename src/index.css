@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+* {
+  font-family: var(--font-sans);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-zinc-50 text-zinc-900 antialiased;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dark body {
+  @apply bg-zinc-950 text-zinc-100;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-zinc-300 dark:bg-zinc-700 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-zinc-400 dark:bg-zinc-600;
+}
+
+/* Typing indicator dots */
+.typing-dot {
+  @apply w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500;
+  animation: typingBounce 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* Message prose */
+.message-content p { @apply mb-2 last:mb-0; }
+.message-content ul { @apply list-disc pl-4 mb-2 space-y-1; }
+.message-content ol { @apply list-decimal pl-4 mb-2 space-y-1; }
+.message-content strong { @apply font-semibold; }
+.message-content h1,
+.message-content h2,
+.message-content h3 { @apply font-semibold mb-1; }
+
+/* Smooth theme transition */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+/* But NOT transitions on things that shouldn't animate */
+input, textarea, button {
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass morphism */
+.glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Sidebar item active state */
+.sidebar-item-active {
+  @apply bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300;
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+}
