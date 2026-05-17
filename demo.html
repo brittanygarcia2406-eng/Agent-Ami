@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ami — Estimador de Copago y Cobertura</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'DM Sans',system-ui,sans-serif}
+:root{
+  --bg:#fafafa;--bg2:#fff;--bg3:#f4f4f5;--bg4:#e4e4e7;
+  --text:#18181b;--text2:#52525b;--text3:#a1a1aa;
+  --border:#e4e4e7;--border2:#d4d4d8;
+  --brand:#14b8a6;--brand2:#0d9488;--brand3:#ccfbef;--brand4:#134e4a;
+  --sidebar:#fff;--sidebar-border:#f4f4f5;
+  --msg-ai:#fff;--msg-ai-border:#f4f4f5;--msg-user-bg:#14b8a6;
+  --input-bg:#f4f4f5;--input-border:#e4e4e7;
+  --card:#fff;--card-border:#e4e4e7;
+  --danger:#ef4444;--danger-bg:#fef2f2;--danger-border:#fecaca;
+  --scrollbar:#d4d4d8;
+}
+.dark{
+  --bg:#09090b;--bg2:#18181b;--bg3:#27272a;--bg4:#3f3f46;
+  --text:#fafafa;--text2:#a1a1aa;--text3:#52525b;
+  --border:#27272a;--border2:#3f3f46;
+  --brand:#14b8a6;--brand2:#0d9488;--brand3:#042f2e;--brand4:#99f6e4;
+  --sidebar:#111113;--sidebar-border:#1c1c1f;
+  --msg-ai:#1c1c1f;--msg-ai-border:#27272a;--msg-user-bg:#0d9488;
+  --input-bg:#1c1c1f;--input-border:#27272a;
+  --card:#1c1c1f;--card-border:#27272a;
+  --danger:#f87171;--danger-bg:#2d0a0a;--danger-border:#7f1d1d;
+  --scrollbar:#3f3f46;
+}
+html,body,#root{height:100%;width:100%;overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:99px}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fade-in{animation:fadeIn .25s ease}
+.slide-up{animation:slideUp .3s cubic-bezier(.16,1,.3,1)}
+
+/* Layout */
+.app{display:flex;height:100vh;background:var(--bg);color:var(--text);transition:background .15s,color .15s}
+/* Login */
+.login-wrap{min-height:100vh;background:#09090b;display:flex;align-items:center;justify-content:center;padding:1rem;position:relative;overflow:hidden}
+.login-glow1{position:absolute;top:-10rem;right:-10rem;width:24rem;height:24rem;background:rgba(20,184,166,.12);border-radius:50%;filter:blur(60px);pointer-events:none}
+.login-glow2{position:absolute;bottom:-10rem;left:-10rem;width:24rem;height:24rem;background:rgba(14,165,233,.08);border-radius:50%;filter:blur(60px);pointer-events:none}
+.login-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.login-card{background:#18181b;border:1px solid #27272a;border-radius:1.25rem;padding:1.5rem;width:100%;max-width:360px;box-shadow:0 25px 50px rgba(0,0,0,.5);position:relative;z-index:1;animation:slideUp .4s cubic-bezier(.16,1,.3,1)}
+.login-logo{text-align:center;margin-bottom:2rem}
+.logo-icon{width:4rem;height:4rem;border-radius:1rem;background:linear-gradient(135deg,#2dd4bf,#0d9488);display:inline-flex;align-items:center;justify-content:center;margin-bottom:.75rem;box-shadow:0 8px 20px rgba(20,184,166,.3)}
+.logo-title{font-size:1.75rem;font-weight:600;color:#fafafa}
+.logo-sub{font-size:.8rem;color:#71717a;margin-top:.2rem}
+.field-label{display:block;font-size:.7rem;font-weight:500;color:#71717a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+.field-input{width:100%;background:#27272a;border:1px solid #3f3f46;border-radius:.75rem;padding:.6rem .875rem;color:#fafafa;font-size:.875rem;outline:none;transition:border-color .15s,box-shadow .15s}
+.field-input:focus{border-color:#14b8a6;box-shadow:0 0 0 3px rgba(20,184,166,.15)}
+.field-input::placeholder{color:#52525b}
+.pw-wrap{position:relative}
+.pw-toggle{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#71717a;font-size:1.1rem;padding:0}
+.btn-primary{width:100%;background:#14b8a6;color:#fff;border:none;border-radius:.75rem;padding:.65rem 1rem;font-size:.875rem;font-weight:500;cursor:pointer;transition:background .15s,box-shadow .15s;display:flex;align-items:center;justify-content:center;gap:.4rem}
+.btn-primary:hover{background:#0d9488;box-shadow:0 4px 12px rgba(20,184,166,.35)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-secondary{width:100%;background:#27272a;color:#fafafa;border:1px solid #3f3f46;border-radius:.75rem;padding:.65rem 1rem;font-size:.875rem;font-weight:500;cursor:pointer;transition:background .15s,border-color .15s;display:flex;align-items:center;justify-content:center;gap:.4rem}
+.btn-secondary:hover{background:#3f3f46;border-color:#52525b}
+.divider{display:flex;align-items:center;gap:.75rem;margin:.875rem 0}
+.divider-line{flex:1;height:1px;background:#27272a}
+.divider-text{font-size:.75rem;color:#52525b}
+.error-box{display:flex;align-items:flex-start;gap:.5rem;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:.75rem;padding:.6rem .75rem;margin-bottom:.875rem}
+.error-text{font-size:.8rem;color:var(--danger);flex:1}
+.hint-btn{width:100%;text-align:center;font-size:.75rem;color:#52525b;background:none;border:none;cursor:pointer;padding:.4rem;transition:color .15s;margin-top:.5rem}
+.hint-btn:hover{color:#a1a1aa}
+.login-footer{text-align:center;font-size:.7rem;color:#3f3f46;margin-top:1rem}
+/* Spinner */
+.spin{width:1rem;height:1rem;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.spin-brand{border-color:rgba(20,184,166,.3);border-top-color:#14b8a6}
+
+/* Sidebar */
+.sidebar{width:15.5rem;flex-shrink:0;height:100%;display:flex;flex-direction:column;background:var(--sidebar);border-right:1px solid var(--sidebar-border);transition:background .15s,border-color .15s}
+.sidebar-header{padding:.75rem;border-bottom:1px solid var(--border)}
+.sidebar-brand{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.brand-name{display:flex;align-items:center;gap:.4rem;font-weight:600;font-size:.875rem;color:var(--text)}
+.brand-icon{width:1.75rem;height:1.75rem;border-radius:.4rem;background:linear-gradient(135deg,#2dd4bf,#0d9488);display:flex;align-items:center;justify-content:center;font-size:.875rem}
+.icon-btn{padding:.375rem;border-radius:.4rem;background:none;border:none;cursor:pointer;color:var(--text2);transition:background .15s,color .15s;font-size:.875rem;display:flex;align-items:center}
+.icon-btn:hover{background:var(--bg3);color:var(--text)}
+.btn-new-chat{width:100%;background:#14b8a6;color:#fff;border:none;border-radius:.75rem;padding:.5rem .75rem;font-size:.8rem;font-weight:500;cursor:pointer;transition:background .15s,box-shadow .15s;display:flex;align-items:center;justify-content:center;gap:.4rem}
+.btn-new-chat:hover{background:#0d9488;box-shadow:0 4px 10px rgba(20,184,166,.3)}
+.sidebar-scroll{flex:1;overflow-y:auto;padding:.5rem}
+.conv-group-label{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);padding:.25rem .5rem;margin-bottom:.25rem}
+.conv-item{display:flex;align-items:center;gap:.4rem;padding:.4rem .5rem;border-radius:.5rem;cursor:pointer;transition:background .1s,color .1s;color:var(--text2);margin-bottom:2px;position:relative;group:true}
+.conv-item:hover{background:var(--bg3);color:var(--text)}
+.conv-item.active{background:rgba(20,184,166,.1);color:#14b8a6}
+.conv-item-icon{font-size:.75rem;opacity:.6;flex-shrink:0}
+.conv-item-title{font-size:.75rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv-actions{display:none;gap:.1rem;flex-shrink:0}
+.conv-item:hover .conv-actions{display:flex}
+.conv-action-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:.2rem;border-radius:.25rem;font-size:.8rem;transition:color .1s,background .1s}
+.conv-action-btn:hover{color:var(--text);background:var(--bg4)}
+.conv-action-btn.del:hover{color:#ef4444;background:#fef2f2}
+.sidebar-empty{text-align:center;padding:2rem 1rem}
+.sidebar-empty-icon{font-size:1.5rem;margin-bottom:.5rem;opacity:.3}
+.sidebar-empty-text{font-size:.75rem;color:var(--text3)}
+.sidebar-footer{padding:.75rem;border-top:1px solid var(--border)}
+.user-row{display:flex;align-items:center;gap:.5rem}
+.user-avatar{width:2rem;height:2rem;border-radius:50%;background:linear-gradient(135deg,#2dd4bf,#0d9488);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:500;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:.75rem;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-plan{font-size:.65rem;font-weight:500;margin-top:.1rem}
+.plan-basic{color:#64748b}.plan-intermediate{color:#0ea5e9}
+.plan-premium{color:#14b8a6}.plan-elite{color:#a855f7}
+
+/* Main chat */
+.chat-area{flex:1;display:flex;flex-direction:column;min-width:0;height:100%}
+.chat-header{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;transition:background .15s}
+.chat-title{display:flex;align-items:center;gap:.4rem;font-size:.875rem;font-weight:600;color:var(--text)}
+.chat-title-icon{width:1.5rem;height:1.5rem;border-radius:.35rem;background:linear-gradient(135deg,#2dd4bf,#0d9488);display:flex;align-items:center;justify-content:center;font-size:.75rem}
+.chat-plan-badge{font-size:.75rem;font-weight:500}
+.messages-area{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.messages-inner{max-width:48rem;margin:0 auto;width:100%;padding:1.5rem 1rem;display:flex;flex-direction:column;gap:1rem}
+
+/* Welcome */
+.welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;animation:fadeIn .3s ease}
+.welcome-logo{width:3.5rem;height:3.5rem;border-radius:1rem;background:linear-gradient(135deg,#2dd4bf,#0d9488);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1rem;box-shadow:0 6px 16px rgba(20,184,166,.25)}
+.welcome-title{font-size:1.5rem;font-weight:600;color:var(--text);margin-bottom:.25rem;text-align:center}
+.welcome-sub{font-size:.875rem;color:var(--text2);margin-bottom:.5rem;text-align:center}
+.welcome-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .75rem;border-radius:99px;font-size:.75rem;font-weight:500;margin-bottom:1.25rem}
+.welcome-desc{font-size:.8rem;color:var(--text2);text-align:center;max-width:26rem;margin-bottom:1.25rem}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;width:100%;max-width:32rem}
+.feature-card{display:flex;align-items:center;gap:.5rem;padding:.6rem .75rem;border-radius:.625rem;font-size:.75rem;color:var(--text2)}
+.feature-icon{font-size:1rem;flex-shrink:0}
+
+/* Messages */
+.msg-row{display:flex;gap:.6rem;align-items:flex-start;animation:fadeIn .2s ease}
+.msg-row.user{flex-direction:row-reverse}
+.msg-avatar{width:1.75rem;height:1.75rem;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem;margin-top:.1rem}
+.msg-avatar.ai{background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#fff}
+.msg-avatar.user{background:var(--bg4);color:var(--text2)}
+.msg-bubble{max-width:78%;border-radius:.875rem;padding:.6rem .875rem;font-size:.8rem;line-height:1.6}
+.msg-bubble.ai{background:var(--msg-ai);border:1px solid var(--msg-ai-border);border-top-left-radius:.2rem;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.msg-bubble.user{background:var(--msg-user-bg);border-top-right-radius:.2rem;color:#fff}
+.msg-bubble.error{background:var(--danger-bg);border-color:var(--danger-border)}
+.msg-time{font-size:.65rem;color:var(--text3);margin-top:.2rem}
+.msg-time.right{text-align:right}
+/* AI message formatting */
+.msg-bubble.ai p{margin-bottom:.4rem}
+.msg-bubble.ai p:last-child{margin-bottom:0}
+.msg-bubble.ai strong{font-weight:600;color:var(--text)}
+.msg-bubble.ai ol{padding-left:.25rem;margin:.4rem 0;display:flex;flex-direction:column;gap:.5rem;list-style:none}
+.msg-bubble.ai ol li{display:flex;gap:.4rem;align-items:flex-start}
+.msg-bubble.ai ol li .li-num{width:1.2rem;height:1.2rem;border-radius:50%;background:rgba(20,184,166,.15);color:#14b8a6;font-size:.65rem;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;margin-top:.1rem}
+.msg-bubble.ai ul{padding-left:.1rem;margin:.3rem 0;display:flex;flex-direction:column;gap:.25rem;list-style:none}
+.msg-bubble.ai ul li{display:flex;gap:.35rem;align-items:flex-start;font-size:.775rem}
+.msg-bubble.ai ul li::before{content:"●";color:#14b8a6;font-size:.4rem;flex-shrink:0;margin-top:.4rem}
+.msg-bubble.ai hr{border:none;border-top:1px solid var(--border);margin:.5rem 0}
+/* Typing */
+.typing-row{display:flex;gap:.6rem;align-items:center}
+.typing-bubble{background:var(--msg-ai);border:1px solid var(--msg-ai-border);border-radius:.875rem;border-top-left-radius:.2rem;padding:.6rem .875rem;display:flex;gap:.25rem;align-items:center}
+.typing-dot{width:.4rem;height:.4rem;border-radius:50%;background:var(--text3);animation:bounce 1.4s ease-in-out infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+
+/* Input area */
+.input-area{border-top:1px solid var(--border);background:var(--bg2);padding:.75rem;flex-shrink:0;transition:background .15s}
+.input-wrap{max-width:48rem;margin:0 auto;width:100%}
+.quick-chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.625rem}
+.chip{font-size:.7rem;padding:.3rem .625rem;border-radius:99px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);cursor:pointer;transition:background .1s,color .1s,border-color .1s;white-space:nowrap}
+.chip:hover{background:var(--brand3);color:var(--brand4);border-color:rgba(20,184,166,.3)}
+.dark .chip:hover{color:#2dd4bf;background:rgba(20,184,166,.1)}
+.input-row{display:flex;gap:.5rem;align-items:flex-end}
+.textarea{flex:1;resize:none;background:var(--input-bg);border:1px solid var(--input-border);border-radius:.75rem;padding:.6rem .875rem;font-size:.8rem;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s;min-height:2.5rem;max-height:8rem;overflow-y:auto;font-family:inherit;line-height:1.5}
+.textarea:focus{border-color:#14b8a6;box-shadow:0 0 0 3px rgba(20,184,166,.12)}
+.textarea::placeholder{color:var(--text3)}
+.textarea:disabled{opacity:.6}
+.send-btn{width:2.5rem;height:2.5rem;border-radius:.625rem;background:#14b8a6;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,box-shadow .15s;font-size:.875rem}
+.send-btn:hover:not(:disabled){background:#0d9488;box-shadow:0 4px 10px rgba(20,184,166,.3)}
+.send-btn:disabled{opacity:.4;cursor:not-allowed}
+.input-hint{font-size:.65rem;color:var(--text3);text-align:center;margin-top:.4rem}
+
+/* Mobile sidebar overlay */
+.mobile-sidebar-overlay{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5)}
+.mobile-sidebar{position:relative;width:16rem;height:100%;display:flex;flex-direction:column;background:var(--sidebar)}
+@media(max-width:768px){
+  .sidebar{display:none}
+  .feature-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ── DATA ─────────────────────────────────────────────────────────────────────
+
+const HOSPITALS = [
+  {id:'h1',name:'Hospital Clínica Kennedy',city:'Guayaquil',sector:'Kennedy Norte',type:'Red Preferencial',rating:4.9,specialties:['cardiología','traumatología','neurología','oncología','pediatría','ginecología','medicina interna','cirugía','emergencias','oftalmología','urología'],plans:['basic','intermediate','premium','elite']},
+  {id:'h2',name:'Hospital Metropolitano',city:'Quito',sector:'La Carolina',type:'Red Preferencial',rating:4.8,specialties:['cardiología','neurología','oncología','pediatría','ginecología','medicina interna','cirugía','emergencias','endocrinología','gastroenterología','reumatología'],plans:['intermediate','premium','elite']},
+  {id:'h3',name:'Clínica Santa Cecilia',city:'Guayaquil',sector:'Urdesa',type:'Clínica Conveniada',rating:4.5,specialties:['medicina general','pediatría','ginecología','traumatología','cirugía','emergencias','dermatología'],plans:['basic','intermediate','premium','elite']},
+  {id:'h4',name:'Hospital Voz Andes',city:'Quito',sector:'La Paz',type:'Red Preferencial',rating:4.7,specialties:['cardiología','cirugía','traumatología','medicina interna','pediatría','emergencias','ginecología'],plans:['basic','intermediate','premium','elite']},
+  {id:'h5',name:'Clínica Pichincha',city:'Quito',sector:'Centro',type:'Red Preferencial',rating:4.6,specialties:['medicina interna','cirugía','traumatología','ginecología','pediatría','emergencias','neurología'],plans:['intermediate','premium','elite']},
+  {id:'h6',name:'Hospital Docente Policía Nacional',city:'Guayaquil',sector:'Sur',type:'Clínica Conveniada',rating:4.3,specialties:['medicina general','traumatología','cirugía','emergencias','pediatría'],plans:['basic','intermediate']},
+  {id:'h7',name:'Clínica La Merced',city:'Ambato',sector:'Centro',type:'Clínica Conveniada',rating:4.4,specialties:['medicina general','pediatría','ginecología','traumatología','cirugía','emergencias'],plans:['basic','intermediate','premium','elite']},
+  {id:'h8',name:'Hospital Monte Sinaí',city:'Guayaquil',sector:'Samborondón',type:'Red Preferencial',rating:4.8,specialties:['cardiología','oncología','neurología','pediatría','ginecología','medicina interna','cirugía','emergencias','gastroenterología','endocrinología','urología','oftalmología'],plans:['premium','elite']},
+  {id:'h9',name:'Clínica Humanitaria',city:'Manta',sector:'Tarqui',type:'Clínica Conveniada',rating:4.2,specialties:['medicina general','pediatría','ginecología','emergencias','cirugía'],plans:['basic','intermediate','premium','elite']},
+  {id:'h10',name:'Hospital Universitario del Río',city:'Cuenca',sector:'El Paraíso',type:'Red Preferencial',rating:4.7,specialties:['cardiología','neurología','oncología','medicina interna','cirugía','traumatología','pediatría','ginecología','emergencias','urología'],plans:['intermediate','premium','elite']},
+  {id:'h11',name:'Clínica Santa Ana',city:'Guayaquil',sector:'Alborada',type:'Clínica Conveniada',rating:4.3,specialties:['medicina general','pediatría','ginecología','traumatología','emergencias','dermatología'],plans:['basic','intermediate','premium']},
+  {id:'h12',name:'Hospital Torre Médica Cuenca',city:'Cuenca',sector:'El Vergel',type:'Red Preferencial',rating:4.6,specialties:['cardiología','medicina interna','neurología','pediatría','ginecología','cirugía','traumatología','emergencias'],plans:['intermediate','premium','elite']},
+  {id:'h13',name:'PMC Portoviejo',city:'Portoviejo',sector:'Centro',type:'Clínica Conveniada',rating:4.1,specialties:['medicina general','pediatría','ginecología','cirugía','emergencias'],plans:['basic','intermediate','premium','elite']},
+];
+
+const PLANS = {
+  basic:{id:'basic',name:'Plan Básico',color:'#64748b',monthlyPremium:45,annualLimit:15000,deductible:200,
+    coverage:{consultations:{copay:8},emergencies:{copay:30,limit:'$2,000'},hospitalization:{copay:50,daily:'$200/día',days:30},surgery:{copay:'10%',limit:'$5,000'},labTests:{copay:5,annual:'$300'},imaging:{copay:15,annual:'$500'},medications:{covered:false,note:'No incluido'},
+      ambulance:{covered:true,type:['Terrestre'],copay:20,limit:'$300/evento',cond:'Solo emergencias certificadas',cities:'Guayaquil, Quito, Cuenca, Ambato, Manta'},
+      maternity:{covered:false,note:'No incluido en Plan Básico'},
+      transplants:{covered:false,note:'No incluido en Plan Básico'}},
+    hospitals:['h1','h3','h4','h6','h7','h9','h11','h13'],
+    copay:{'h1':8,'h3':6,'h4':8,'h6':5,'h7':5,'h9':5,'h11':6,'h13':5}},
+  intermediate:{id:'intermediate',name:'Plan Intermedio',color:'#0ea5e9',monthlyPremium:89,annualLimit:30000,deductible:100,
+    coverage:{consultations:{copay:5},emergencies:{copay:20,limit:'$5,000'},hospitalization:{copay:30,daily:'$400/día',days:60},surgery:{copay:'8%',limit:'$10,000'},labTests:{copay:3,annual:'$600'},imaging:{copay:10,annual:'$1,000'},medications:{covered:true,copay:'20%',annual:'$500'},
+      ambulance:{covered:true,type:['Terrestre'],copay:10,limit:'$600/evento',cond:'Emergencias y traslados',cities:'Guayaquil, Quito, Cuenca, Ambato, Manta, Portoviejo'},
+      maternity:{covered:true,copay:80,limit:'$3,000 parto/$4,500 cesárea',newborn:'30 días',complic:'$5,000'},
+      transplants:{covered:false,note:'No incluido en Plan Intermedio'}},
+    hospitals:['h1','h2','h3','h4','h5','h6','h7','h9','h10','h11','h12','h13'],
+    copay:{'h1':10,'h2':12,'h3':8,'h4':10,'h5':10,'h6':6,'h7':6,'h9':6,'h10':10,'h11':7,'h12':10,'h13':6}},
+  premium:{id:'premium',name:'Plan Premium',color:'#14b8a6',monthlyPremium:165,annualLimit:80000,deductible:0,
+    coverage:{consultations:{copay:0},emergencies:{copay:10,limit:'$20,000'},hospitalization:{copay:15,daily:'$800/día',days:120},surgery:{copay:'5%',limit:'$30,000'},labTests:{copay:0,annual:'$2,000'},imaging:{copay:5,annual:'$3,000'},medications:{covered:true,copay:'10%',annual:'$2,000'},
+      ambulance:{covered:true,type:['Terrestre','Aérea'],copay:0,limit:'$5,000/evento',cond:'Emergencias y repatriaciones',cities:'Guayaquil, Quito, Cuenca, Ambato, Manta, Portoviejo, Loja, Esmeraldas'},
+      maternity:{covered:true,copay:20,limit:'$8,000 parto/$12,000 cesárea',newborn:'90 días',complic:'$15,000',prenatal:'10 controles'},
+      transplants:{covered:true,max:40000,cond:'Riñón, córnea, médula ósea. Preautorización requerida.',wait:'12 meses'}},
+    hospitals:['h1','h2','h3','h4','h5','h7','h8','h9','h10','h11','h12','h13'],
+    copay:{'h1':10,'h2':12,'h3':8,'h4':10,'h5':10,'h7':7,'h8':16,'h9':7,'h10':12,'h11':8,'h12':12,'h13':7}},
+  elite:{id:'elite',name:'Plan Elite',color:'#a855f7',monthlyPremium:320,annualLimit:250000,deductible:0,
+    coverage:{consultations:{copay:0},emergencies:{copay:0,limit:'$50,000'},hospitalization:{copay:0,daily:'$2,000/día',days:365},surgery:{copay:'0%',limit:'$100,000'},labTests:{copay:0,annual:'Sin límite'},imaging:{copay:0,annual:'Sin límite'},medications:{covered:true,copay:'5%',annual:'$10,000'},
+      ambulance:{covered:true,type:['Terrestre','Aérea','Internacional'],copay:0,limit:'Sin límite',cond:'Nacional e internacional completo',cities:'Todo Ecuador + Internacional'},
+      maternity:{covered:true,copay:0,limit:'Sin límite',newborn:'365 días',complic:'Sin límite',prenatal:'Ilimitados'},
+      transplants:{covered:true,max:120000,cond:'Riñón, hígado, corazón, córnea, médula ósea, pulmón.',wait:'6 meses',extra:'Medicación inmunosupresora 2 años'}},
+    hospitals:['h1','h2','h3','h4','h5','h7','h8','h9','h10','h11','h12','h13'],
+    copay:{'h1':0,'h2':0,'h3':5,'h4':0,'h5':0,'h7':5,'h8':0,'h9':5,'h10':0,'h11':5,'h12':0,'h13':5}},
+};
+
+const USERS = [
+  {id:'u1',affiliateNumber:'AF-001234',name:'Carlos Mendoza',plan:'premium',city:'Guayaquil',password:'Pass2024!'},
+  {id:'u2',affiliateNumber:'AF-002345',name:'María Rodríguez',plan:'elite',city:'Quito',password:'Pass2024!'},
+  {id:'u3',affiliateNumber:'AF-003456',name:'Juan Pérez',plan:'basic',city:'Cuenca',password:'Pass2024!'},
+  {id:'u4',affiliateNumber:'AF-004567',name:'Ana García',plan:'intermediate',city:'Ambato',password:'Pass2024!'},
+  {id:'u5',affiliateNumber:'AF-005678',name:'Pedro Torres',plan:'premium',city:'Manta',password:'Pass2024!'},
+  {id:'u6',affiliateNumber:'AF-006789',name:'Lucía Vargas',plan:'elite',city:'Guayaquil',password:'Pass2024!'},
+  {id:'u7',affiliateNumber:'AF-007890',name:'Roberto Silva',plan:'basic',city:'Quito',password:'Pass2024!'},
+  {id:'u8',affiliateNumber:'AF-008901',name:'Carmen López',plan:'intermediate',city:'Cuenca',password:'Pass2024!'},
+];
+
+const SYMPTOM_MAP = [
+  {kw:['pecho','corazón','cardíaco','chest','heart','arritmia','taquicardia','infarto','precordial'],spec:'cardiología',urg:'alta'},
+  {kw:['cabeza','migraña','cefalea','neurológico','convulsión','desmayo','headache','derrame'],spec:'neurología',urg:'alta'},
+  {kw:['hueso','fractura','rodilla','cadera','columna','espalda','articulación','golpe','torcedura','trauma'],spec:'traumatología',urg:'media'},
+  {kw:['cáncer','tumor','oncología','quimio','biopsia','cancer','neoplasia'],spec:'oncología',urg:'alta'},
+  {kw:['niño','bebé','infant','pediatría','fiebre niño','recién nacido'],spec:'pediatría',urg:'media'},
+  {kw:['embarazo','parto','cesárea','ginecología','feto','menstruación','ovario','útero'],spec:'ginecología',urg:'media'},
+  {kw:['estómago','intestino','colon','hígado','gastritis','diarrea','vómito','digestivo','gastro','reflujo'],spec:'gastroenterología',urg:'baja'},
+  {kw:['diabetes','tiroides','hormona','insulina','páncreas'],spec:'endocrinología',urg:'baja'},
+  {kw:['riñón','orina','próstata','vejiga','renal','urinario'],spec:'urología',urg:'media'},
+  {kw:['ojo','visión','retina','cataratas','glaucoma','vista'],spec:'oftalmología',urg:'baja'},
+  {kw:['piel','acné','dermatitis','eccema','psoriasis','dermatología'],spec:'dermatología',urg:'baja'},
+  {kw:['cirugía','operación','hernia','apéndice','vesícula'],spec:'cirugía',urg:'alta'},
+  {kw:['emergencia','urgencia','accidente','urgente','grave','critical'],spec:'emergencias',urg:'crítica'},
+  {kw:['dolor','fiebre','gripe','resfriado','tos','malestar','general'],spec:'medicina general',urg:'baja'},
+];
+
+function detectSpecialty(msg) {
+  const low = msg.toLowerCase();
+  for(const e of SYMPTOM_MAP) {
+    if(e.kw.some(k=>low.includes(k))) return e;
+  }
+  return null;
+}
+
+function getHospitals(planId, city) {
+  const plan = PLANS[planId];
+  return HOSPITALS
+    .filter(h=>plan.hospitals.includes(h.id))
+    .map(h=>({...h, copay: plan.copay[h.id]??10, local: h.city.toLowerCase()===city.toLowerCase()}))
+    .sort((a,b)=>{
+      if(a.local&&!b.local) return -1;
+      if(!a.local&&b.local) return 1;
+      return a.copay-b.copay;
+    });
+}
+
+// ── AI Response Builder ────────────────────────────────────────────────────────
+
+const GROQ_API_KEY = window.__GROQ_KEY || '';
+
+async function getAIResponse(userMsg, history, user) {
+  const plan = PLANS[user.plan];
+  const hospitals = getHospitals(user.plan, user.city);
+  const hospitalList = hospitals.map(h=>
+    `- ${h.name} | ${h.city} (${h.sector}) | ${h.type} | Copago: $${h.copay} | Cal: ${h.rating}⭐ | Esp: ${h.specialties.join(', ')}`
+  ).join('\n');
+
+  const cov = plan.coverage;
+  const systemPrompt = `Eres Ami, asistente inteligente de seguros médicos de Ecuador. Respondes en el mismo idioma del usuario (español o inglés). Eres amigable, empático y profesional.
+
+SOLO hablas de seguros médicos, coberturas, hospitales, copagos, especialidades y salud. Para preguntas fuera de contexto responde: "Lo sentimos, solo puedo ayudarte con temas relacionados a tu seguro médico. 😊"
+
+DATOS DEL ASEGURADO:
+- Nombre: ${user.name}
+- Afiliado: ${user.affiliateNumber}
+- Plan: ${plan.name} | Ciudad: ${user.city}
+- Límite anual: $${plan.annualLimit.toLocaleString()} | Deducible: $${plan.deductible}
+
+COBERTURA:
+- Consultas: Copago $${cov.consultations.copay}
+- Emergencias: Copago $${cov.emergencies.copay} | Límite: ${cov.emergencies.limit}
+- Hospitalización: $${cov.hospitalization.copay}/día | ${cov.hospitalization.daily} | ${cov.hospitalization.days} días/año
+- Cirugías: ${cov.surgery.copay} copago | Límite: ${cov.surgery.limit}
+- Exámenes: Copago $${cov.labTests.copay} | ${cov.labTests.annual}/año
+- Imágenes: Copago $${cov.imaging.copay} | ${cov.imaging.annual}/año
+- Medicamentos: ${cov.medications.covered ? `Copago ${cov.medications.copay} | ${cov.medications.annual}/año` : cov.medications.note}
+- Ambulancia: ${cov.ambulance.covered ? `${cov.ambulance.type.join('/')} | Copago: ${cov.ambulance.copay===0?'Sin copago':'$'+cov.ambulance.copay} | ${cov.ambulance.limit} | ${cov.ambulance.cond} | Ciudades: ${cov.ambulance.cities}` : 'No cubierta'}
+- Maternidad: ${cov.maternity.covered ? `Copago $${cov.maternity.copay} | ${cov.maternity.limit} | Recién nacido: ${cov.maternity.newborn} | Complicaciones: ${cov.maternity.complic}${cov.maternity.prenatal?` | Prenatales: ${cov.maternity.prenatal}`:''}` : cov.maternity.note}
+- Trasplantes: ${cov.transplants.covered ? `Hasta $${cov.transplants.max?.toLocaleString()} | ${cov.transplants.cond} | Espera: ${cov.transplants.wait}` : cov.transplants.note}
+
+HOSPITALES DISPONIBLES (ordenados por copago):
+${hospitalList}
+
+INSTRUCCIONES:
+1. Si el usuario describe síntomas, detecta la especialidad y muestra máx 3 hospitales con esa especialidad, ordenados por copago (el primero marcado como "✅ Opción más económica").
+2. Formato de hospital: número, nombre en negrita, tipo de red, ciudad/sector, copago, calificación.
+3. Para síntomas urgentes (pecho, convulsiones, dificultad respiratoria), primero indica llamar al 911.
+4. Al final de respuestas sobre hospitales, ofrece ayuda con otros temas.
+5. Si falta info (ciudad, síntoma), pregunta específicamente.
+6. Comprende mensajes con errores ortográficos.
+7. Saluda naturalmente si el usuario saluda.`;
+
+  // Try Groq API
+  if(GROQ_API_KEY && GROQ_API_KEY.startsWith('gsk_')) {
+    try {
+      const messages = [
+        {role:'system',content:systemPrompt},
+        ...history.slice(-16),
+        {role:'user',content:userMsg}
+      ];
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${GROQ_API_KEY}`},
+        body:JSON.stringify({model:'llama-3.3-70b-versatile',messages,temperature:.7,max_tokens:900})
+      });
+      if(res.ok){
+        const data=await res.json();
+        return data.choices[0]?.message?.content||'';
+      }
+    }catch(e){}
+  }
+
+  // Smart fallback
+  return buildFallback(userMsg, user);
+}
+
+function buildFallback(msg, user) {
+  const plan = PLANS[user.plan];
+  const low = msg.toLowerCase();
+
+  // Greeting
+  if(/^(hola|hi|hello|buenos|buenas|hey|saludos|good morning|good afternoon)/.test(low)) {
+    return `¡Hola, ${user.name.split(' ')[0]}! 👋 Soy **Ami**, tu asistente inteligente de seguros médicos.\n\n¿En qué puedo ayudarte hoy? Puedo informarte sobre:\n\n- 🏥 Hospitales disponibles y copagos según tu ubicación\n- 💊 Cobertura detallada de tu ${plan.name}\n- 🚑 Ambulancia y emergencias\n- 🤰 Maternidad y recién nacido\n- 🫀 Trasplantes\n- 🔬 Exámenes y especialidades\n\n¡Cuéntame tus síntomas o en qué te puedo ayudar!`;
+  }
+
+  // Out of scope
+  if(/cocina|receta|comida|fútbol|música|política|película|deporte|clima|tiempo|economía|pregunta general/i.test(low)&&
+    !/seguro|hospital|copago|cobertura|salud|médico|enferm|síntoma|dolor|plan/.test(low)) {
+    return 'Lo sentimos, solo puedo ayudarte con información relacionada a coberturas, beneficios y servicios de tu aseguradora. 😊\n\n¿Tienes alguna consulta sobre tu seguro médico?';
+  }
+
+  // Symptom detection
+  const match = detectSpecialty(msg);
+  if(match) {
+    const urgWarn = (match.urg==='crítica'||match.urg==='alta')
+      ? '\n\n⚠️ **Nota:** Si es una emergencia, llama primero al **911**. Ami te apoya con la información del seguro.\n'
+      : '';
+    const hospitals = getHospitals(user.plan, user.city);
+    const filtered = hospitals.filter(h=>h.specialties.some(s=>s.includes(match.spec))).slice(0,3);
+    const specTitle = match.spec.charAt(0).toUpperCase()+match.spec.slice(1);
+
+    if(!filtered.length) {
+      return `Basado en lo que describes, te recomiendo **${specTitle}**.${urgWarn}\n\nActualmente no encontré hospitales con esa especialidad disponibles en tu red para tu ciudad. Te recomiendo llamar a tu aseguradora o consultar en cualquiera de los hospitales de tu red.`;
+    }
+
+    const hospLines = filtered.map((h,i)=>
+      `${i+1}. **${h.name}** — ${h.type}\n   📍 ${h.city}, ${h.sector}\n   💰 Copago: $${h.copay}.00${i===0?' ✅ *(Opción más económica)*':''}\n   ⭐ Calificación: ${h.rating}/5.0`
+    ).join('\n\n');
+
+    return `Basado en lo que describes, te recomiendo atenderte en **${specTitle}**.${urgWarn}\n\nCon tu **${plan.name}**, estas son tus mejores opciones:\n\n${hospLines}\n\n---\n¿Deseas que te ayude también con:\n- Cobertura detallada del hospital\n- Límites de tu plan\n- Ambulancia y traslados\n- Exámenes y procedimientos\n- Maternidad o trasplantes`;
+  }
+
+  // Ambulance
+  if(/ambulan/i.test(low)) {
+    const amb = plan.coverage.ambulance;
+    return amb.covered
+      ? `🚑 **Cobertura de Ambulancia — ${plan.name}**\n\n- **Tipo:** ${amb.type.join(', ')}\n- **Copago:** ${amb.copay===0?'Sin copago ✅':'$'+amb.copay}\n- **Límite:** ${amb.limit}\n- **Condiciones:** ${amb.cond}\n- **Ciudades:** ${amb.cities}\n\n¿Necesitas información adicional sobre tu cobertura?`
+      : `Tu **${plan.name}** no incluye cobertura de ambulancia. Para emergencias, llama al **911**.\n\n¿Te gustaría conocer información sobre otros beneficios de tu plan?`;
+  }
+
+  // Maternity
+  if(/maternidad|embarazo|parto|bebé|recién nacido|cesárea|prenatal/i.test(low)) {
+    const mat = plan.coverage.maternity;
+    return mat.covered
+      ? `🤰 **Cobertura de Maternidad — ${plan.name}**\n\n- **Copago parto:** $${mat.copay}\n- **Límite cobertura:** ${mat.limit}\n- **Recién nacido cubierto:** ${mat.newborn}\n- **Complicaciones:** ${mat.complic}${mat.prenatal?`\n- **Controles prenatales:** ${mat.prenatal}`:''}\n\n¿Tienes alguna otra consulta sobre maternidad o tu plan?`
+      : `Tu **${plan.name}** no incluye cobertura de maternidad. Considera un upgrade para acceder a este beneficio.\n\n¿Te gustaría información sobre otros beneficios disponibles en tu plan?`;
+  }
+
+  // Transplants
+  if(/trasplante|transplante|trasplan/i.test(low)) {
+    const trn = plan.coverage.transplants;
+    return trn.covered
+      ? `🫀 **Cobertura de Trasplantes — ${plan.name}**\n\n- **Monto máximo:** $${trn.max?.toLocaleString()}\n- **Condiciones:** ${trn.cond}\n- **Período de espera:** ${trn.wait}${trn.extra?`\n- **Incluye:** ${trn.extra}`:''}\n\n¿Tienes preguntas adicionales sobre esta cobertura?`
+      : `Tu **${plan.name}** no incluye cobertura de trasplantes. Planes Premium o Elite sí incluyen este beneficio.\n\n¿Puedo ayudarte con alguna otra consulta?`;
+  }
+
+  // Hospitals
+  if(/hospital|clínica|donde|dónde|atender/i.test(low)) {
+    const hospitals = getHospitals(user.plan, user.city).slice(0,4);
+    const lines = hospitals.map((h,i)=>
+      `${i+1}. **${h.name}** — ${h.type}\n   📍 ${h.city}, ${h.sector} | 💰 Copago: $${h.copay} | ⭐ ${h.rating}`
+    ).join('\n\n');
+    return `🏥 **Hospitales disponibles con tu ${plan.name}** (ordenados por copago):\n\n${lines}\n\n---\n¿Tienes algún síntoma específico? Puedo sugerirte el hospital con la especialidad que necesitas.`;
+  }
+
+  // Plan info
+  if(/plan|cobertura|beneficio|límite|deducible|cuánto|cuanto/i.test(low)) {
+    const cov = plan.coverage;
+    return `📋 **Resumen de tu ${plan.name}**\n\n- **Límite anual:** $${plan.annualLimit.toLocaleString()}\n- **Deducible:** $${plan.deductible}\n- **Consultas:** Copago $${cov.consultations.copay}\n- **Emergencias:** Copago $${cov.emergencies.copay} | ${cov.emergencies.limit}\n- **Hospitalización:** $${cov.hospitalization.copay}/día | ${cov.hospitalization.daily}\n- **Cirugías:** Copago ${cov.surgery.copay} | ${cov.surgery.limit}\n- **Exámenes:** Copago $${cov.labTests.copay} | ${cov.labTests.annual}/año\n- **Medicamentos:** ${cov.medications.covered?`Copago ${cov.medications.copay} | ${cov.medications.annual}/año`:cov.medications.note}\n\n¿Necesitas información más detallada sobre algún beneficio específico?`;
+  }
+
+  return `Entiendo tu consulta. Para darte una respuesta más precisa, ¿podrías contarme:\n\n- ¿Cuáles son tus síntomas o qué tipo de atención necesitas?\n- ¿En qué ciudad deseas atenderte?\n\nEstoy aquí para ayudarte con toda la información de tu **${plan.name}**. 😊`;
+}
+
+// ── Storage ───────────────────────────────────────────────────────────────────
+
+function getConvs(uid) {
+  try { return JSON.parse(localStorage.getItem(`ami-c-${uid}`))||[] } catch { return [] }
+}
+function saveConvs(uid,c) { localStorage.setItem(`ami-c-${uid}`,JSON.stringify(c)) }
+function getMsgs(cid) {
+  try { return JSON.parse(localStorage.getItem(`ami-m-${cid}`))||[] } catch { return [] }
+}
+function saveMsgs(cid,m) { localStorage.setItem(`ami-m-${cid}`,JSON.stringify(m)) }
+function getSession() {
+  try {
+    const s=JSON.parse(localStorage.getItem('ami-session'));
+    if(!s) return null;
+    if(Date.now()-s.loginAt>7*24*60*60*1000){localStorage.removeItem('ami-session');return null}
+    return s;
+  }catch{return null}
+}
+function saveSession(u) { localStorage.setItem('ami-session',JSON.stringify(u)) }
+function clearSession() { localStorage.removeItem('ami-session') }
+
+// ── Icons (SVG) ───────────────────────────────────────────────────────────────
+
+const IconShield = ()=><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+const IconPlus = ()=><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+const IconMsg = ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+const IconTrash = ()=><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+const IconEdit = ()=><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+const IconLogout = ()=><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+const IconSun = ()=><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+const IconMoon = ()=><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+const IconSend = ()=><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+const IconUser = ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+const IconMenu = ()=><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+const IconEye = ({off})=><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">{off?<><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></>:<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>}</svg>
+const IconZap = ()=><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+const IconAlert = ()=><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+const IconX = ()=><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+
+// ── Message Renderer ──────────────────────────────────────────────────────────
+
+function renderMsg(text) {
+  if(!text) return null;
+  const lines = text.split('\n');
+  const els = [];
+  let i = 0;
+  while(i < lines.length) {
+    const line = lines[i];
+    if(!line.trim()) { els.push(<br key={i}/>); i++; continue; }
+    if(line.trim()==='---') { els.push(<hr key={i}/>); i++; continue; }
+    if(/^\d+\./.test(line)) {
+      const items = [];
+      while(i<lines.length && /^\d+\./.test(lines[i])) {
+        let cont = lines[i].replace(/^\d+\.\s*/,'');
+        i++;
+        while(i<lines.length && lines[i].startsWith('   ')) { cont+='\n'+lines[i].slice(3); i++; }
+        items.push(cont);
+      }
+      els.push(<ol key={`ol${i}`}>{items.map((it,idx)=>(
+        <li key={idx}><span className="li-num">{idx+1}</span>
+          <span>{it.split('\n').map((l,li)=><span key={li} style={li>0?{display:'block',fontSize:'.72rem',opacity:.75,marginTop:'2px'}:{}}>{renderInline(l)}</span>)}</span>
+        </li>
+      ))}</ol>);
+      continue;
+    }
+    if(line.startsWith('- ')||line.startsWith('* ')) {
+      const items=[];
+      while(i<lines.length&&(lines[i].startsWith('- ')||lines[i].startsWith('* '))) { items.push(lines[i].slice(2)); i++; }
+      els.push(<ul key={`ul${i}`}>{items.map((it,idx)=><li key={idx}>{renderInline(it)}</li>)}</ul>);
+      continue;
+    }
+    els.push(<p key={i}>{renderInline(line)}</p>);
+    i++;
+  }
+  return els;
+}
+
+function renderInline(text) {
+  if(!text) return '';
+  return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((p,i)=>{
+    if(p.startsWith('**')&&p.endsWith('**')) return <strong key={i}>{p.slice(2,-2)}</strong>;
+    if(p.startsWith('*')&&p.endsWith('*')&&p.length>2) return <em key={i}>{p.slice(1,-1)}</em>;
+    return p;
+  });
+}
+
+// ── Components ────────────────────────────────────────────────────────────────
+
+function SidebarComp({user, convs, activeId, onNew, onSelect, onDelete, onRename, onLogout, dark, onToggleDark, onClose}) {
+  const plan = PLANS[user.plan];
+  const planColors = {basic:'plan-basic',intermediate:'plan-intermediate',premium:'plan-premium',elite:'plan-elite'};
+  const [editId, setEditId] = useState(null);
+  const [editVal, setEditVal] = useState('');
+  const [hover, setHover] = useState(null);
+
+  function groupConvs(cs) {
+    const now = new Date();
+    const tod=[],yes=[],old=[];
+    cs.forEach(c=>{
+      const d=new Date(c.updatedAt||c.createdAt);
+      const diff=(now-d)/(1000*60*60);
+      if(diff<24) tod.push(c);
+      else if(diff<48) yes.push(c);
+      else old.push(c);
+    });
+    return {tod,yes,old};
+  }
+
+  const {tod,yes,old} = groupConvs(convs);
+
+  function ConvGroup({label, items}) {
+    if(!items.length) return null;
+    return <div style={{marginBottom:'1rem'}}>
+      <div className="conv-group-label">{label}</div>
+      {items.map(c=>(
+        <div key={c.id} className={`conv-item${c.id===activeId?' active':''}`}
+          onClick={()=>onSelect(c)}
+          onMouseEnter={()=>setHover(c.id)}
+          onMouseLeave={()=>setHover(null)}>
+          <span className="conv-item-icon"><IconMsg/></span>
+          {editId===c.id
+            ? <input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
+                onBlur={()=>{if(editVal.trim())onRename(c.id,editVal);setEditId(null)}}
+                onKeyDown={e=>{if(e.key==='Enter'){if(editVal.trim())onRename(c.id,editVal);setEditId(null)}if(e.key==='Escape')setEditId(null)}}
+                onClick={e=>e.stopPropagation()}
+                style={{flex:1,background:'transparent',border:'none',borderBottom:'1px solid #14b8a6',fontSize:'.75rem',color:'var(--text)',outline:'none'}}/>
+            : <span className="conv-item-title">{c.title}</span>
+          }
+          {(hover===c.id||c.id===activeId)&&editId!==c.id&&(
+            <div className="conv-actions">
+              <button className="conv-action-btn" onClick={e=>{e.stopPropagation();setEditId(c.id);setEditVal(c.title)}} title="Renombrar"><IconEdit/></button>
+              <button className="conv-action-btn del" onClick={e=>{e.stopPropagation();onDelete(c.id)}} title="Eliminar"><IconTrash/></button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  }
+
+  return (
+    <div className="sidebar">
+      <div className="sidebar-header">
+        <div className="sidebar-brand">
+          <div className="brand-name">
+            <div className="brand-icon">🛡️</div>
+            Ami
+          </div>
+          <div style={{display:'flex',gap:'2px',alignItems:'center'}}>
+            <button className="icon-btn" onClick={onToggleDark} title="Cambiar tema">
+              {dark?<IconSun/>:<IconMoon/>}
+            </button>
+            {onClose&&<button className="icon-btn" onClick={onClose}><IconX/></button>}
+          </div>
+        </div>
+        <button className="btn-new-chat" onClick={onNew}>
+          <IconPlus/> Nuevo chat
+        </button>
+      </div>
+      <div className="sidebar-scroll">
+        {convs.length===0
+          ? <div className="sidebar-empty"><div className="sidebar-empty-icon">💬</div><div className="sidebar-empty-text">Inicia una conversación con Ami</div></div>
+          : <><ConvGroup label="Hoy" items={tod}/><ConvGroup label="Ayer" items={yes}/><ConvGroup label="Anteriores" items={old}/></>
+        }
+      </div>
+      <div className="sidebar-footer">
+        <div className="user-row">
+          <div className="user-avatar">{user.name.charAt(0)}</div>
+          <div className="user-info">
+            <div className="user-name">{user.name}</div>
+            <div className={`user-plan ${planColors[user.plan]}`}>{plan?.name}{user.isDemo?' · Demo':''}</div>
+          </div>
+          <button className="icon-btn" onClick={onLogout} title="Cerrar sesión" style={{color:'var(--text3)'}}>
+            <IconLogout/>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WelcomeComp({user}) {
+  const plan = PLANS[user.plan];
+  const badgeColors = {basic:{bg:'rgba(100,116,139,.1)',color:'#64748b'},intermediate:{bg:'rgba(14,165,233,.1)',color:'#0ea5e9'},premium:{bg:'rgba(20,184,166,.1)',color:'#14b8a6'},elite:{bg:'rgba(168,85,247,.1)',color:'#a855f7'}};
+  const bc = badgeColors[user.plan];
+  const features = [
+    {icon:'❤️',label:'Síntomas y especialidades'},{icon:'🏥',label:'Hospitales disponibles'},
+    {icon:'🚑',label:'Emergencias y ambulancia'},{icon:'🤰',label:'Maternidad'},
+    {icon:'🔬',label:'Exámenes y cirugías'},{icon:'🛡️',label:'Cobertura de tu plan'},
+  ];
+  return (
+    <div className="welcome">
+      <div className="welcome-logo">🛡️</div>
+      <h1 className="welcome-title">Hola, {user.name.split(' ')[0]} 👋</h1>
+      <p className="welcome-sub">Soy <strong>Ami</strong>, tu asistente de seguros médicos</p>
+      <div className="welcome-badge" style={{background:bc.bg,color:bc.color}}>
+        <IconShield/> {plan?.name} · {user.city}
+      </div>
+      <p className="welcome-desc">Puedo ayudarte a entender tu cobertura, encontrar hospitales y calcular tu copago antes de atenderte.</p>
+      <div className="feature-grid">
+        {features.map(f=>(
+          <div key={f.label} className="feature-card" style={{background:'var(--bg3)'}}>
+            <span className="feature-icon">{f.icon}</span>
+            <span>{f.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MsgComp({msg}) {
+  const isAi = msg.role==='assistant';
+  return (
+    <div className={`msg-row${isAi?'':' user'}`}>
+      <div className={`msg-avatar ${isAi?'ai':'user'}`}>{isAi?'🛡️':<IconUser/>}</div>
+      <div>
+        <div className={`msg-bubble ${isAi?'ai':'user'}${msg.isError?' error':''}`}>
+          {isAi ? renderMsg(msg.content) : <p>{msg.content}</p>}
+        </div>
+        <div className={`msg-time${!isAi?' right':''}`}>
+          {new Date(msg.createdAt).toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'})}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TypingComp() {
+  return (
+    <div className="typing-row">
+      <div className="msg-avatar ai">🛡️</div>
+      <div className="typing-bubble">
+        <span className="typing-dot"/><span className="typing-dot"/><span className="typing-dot"/>
+      </div>
+    </div>
+  )
+}
+
+const CHIPS = ['¿Cuál es mi cobertura?','Tengo dolor de pecho','¿Qué hospitales disponibles tengo?','Información de ambulancia','Maternidad y recién nacido','Copago de emergencias'];
+
+function ChatInput({onSend,loading,hasMessages}) {
+  const [val,setVal] = useState('');
+  const ref = useRef();
+  useEffect(()=>{
+    if(ref.current){ref.current.style.height='auto';ref.current.style.height=Math.min(ref.current.scrollHeight,140)+'px'}
+  },[val]);
+  function send(){if(!val.trim()||loading)return;onSend(val.trim());setVal('')}
+  return (
+    <div className="input-area">
+      <div className="input-wrap">
+        {!hasMessages&&<div className="quick-chips">{CHIPS.map(c=><button key={c} className="chip" onClick={()=>onSend(c)}>{c}</button>)}</div>}
+        <div className="input-row">
+          <textarea ref={ref} className="textarea" value={val} onChange={e=>setVal(e.target.value)}
+            onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
+            placeholder="Escribe tus síntomas o pregunta sobre tu seguro..." disabled={loading} rows={1}/>
+          <button className="send-btn" onClick={send} disabled={!val.trim()||loading}>
+            {loading?<span className="spin"/>:<IconSend/>}
+          </button>
+        </div>
+        <div className="input-hint">Ante emergencias llama al 911 · Ami brinda información orientativa</div>
+      </div>
+    </div>
+  )
+}
+
+// ── Login Page ────────────────────────────────────────────────────────────────
+
+function LoginPage({onLogin}) {
+  const [num,setNum]=useState('');
+  const [pw,setPw]=useState('');
+  const [showPw,setShowPw]=useState(false);
+  const [err,setErr]=useState('');
+  const [loading,setLoading]=useState(false);
+  const [demoLoading,setDemoLoading]=useState(false);
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    if(!num.trim()||!pw.trim()){setErr('Completa todos los campos.');return}
+    setLoading(true); setErr('');
+    await new Promise(r=>setTimeout(r,700));
+    const user = USERS.find(u=>u.affiliateNumber===num.trim()&&u.password===pw);
+    setLoading(false);
+    if(!user){setErr('Número de afiliado o contraseña incorrectos.');return}
+    const s={...user,loginAt:Date.now()};
+    saveSession(s); onLogin(s);
+  }
+
+  async function handleDemo() {
+    setDemoLoading(true);
+    await new Promise(r=>setTimeout(r,900));
+    const plans=['basic','intermediate','premium','elite'];
+    const cities=['Guayaquil','Quito','Cuenca','Manta','Ambato'];
+    const planId=plans[Math.floor(Math.random()*plans.length)];
+    const city=cities[Math.floor(Math.random()*cities.length)];
+    const uid=`DEMO-${Math.random().toString(36).slice(2,10).toUpperCase()}`;
+    const num2=`AF-DEMO-${Math.floor(Math.random()*9000+1000)}`;
+    const u={id:uid,affiliateNumber:num2,name:'Usuario Demo',plan:planId,city,isDemo:true,loginAt:Date.now()};
+    saveSession(u); setDemoLoading(false); onLogin(u);
+  }
+
+  return (
+    <div className="login-wrap">
+      <div className="login-glow1"/><div className="login-glow2"/><div className="login-grid"/>
+      <div className="login-card slide-up">
+        <div className="login-logo">
+          <div className="logo-icon">🛡️</div>
+          <div className="logo-title">Ami</div>
+          <div className="logo-sub">Tu asistente inteligente de seguros</div>
+        </div>
+        <h2 style={{fontSize:'.95rem',fontWeight:500,color:'#fafafa',marginBottom:'1rem'}}>Iniciar sesión</h2>
+        {err&&<div className="error-box"><span style={{color:'#f87171',fontSize:'1rem'}}>⚠</span><span className="error-text">{err}</span></div>}
+        <form onSubmit={handleLogin} style={{display:'flex',flexDirection:'column',gap:'.75rem'}}>
+          <div>
+            <label className="field-label">N° de Afiliado</label>
+            <input className="field-input" type="text" value={num} onChange={e=>{setNum(e.target.value);setErr('')}} placeholder="AF-001234"/>
+          </div>
+          <div>
+            <label className="field-label">Contraseña</label>
+            <div className="pw-wrap">
+              <input className="field-input" type={showPw?'text':'password'} value={pw} onChange={e=>{setPw(e.target.value);setErr('')}} placeholder="••••••••" style={{paddingRight:'2.5rem'}}/>
+              <button type="button" className="pw-toggle" onClick={()=>setShowPw(!showPw)}><IconEye off={showPw}/></button>
+            </div>
+          </div>
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading?<><span className="spin"/>Verificando...</>:<>Ingresar →</>}
+          </button>
+        </form>
+        <div className="divider"><div className="divider-line"/><span className="divider-text">o</span><div className="divider-line"/></div>
+        <button className="btn-secondary" onClick={handleDemo} disabled={demoLoading}>
+          {demoLoading?<><span className="spin spin-brand"/>Generando sesión...</>:<><span style={{color:'#fbbf24'}}><IconZap/></span>Ingreso rápido — Modo Demo</>}
+        </button>
+        <button className="hint-btn" onClick={()=>{setNum('AF-001234');setPw('Pass2024!');setErr('')}}>
+          Usar credenciales de prueba: AF-001234 / Pass2024!
+        </button>
+      </div>
+      <div className="login-footer">© 2025 Ami Seguros · Ecuador</div>
+    </div>
+  )
+}
+
+// ── Chat Page ─────────────────────────────────────────────────────────────────
+
+function ChatPage({user,onLogout,dark,onToggleDark}) {
+  const [convs,setConvs]=useState(()=>getConvs(user.id));
+  const [activeConv,setActiveConv]=useState(null);
+  const [msgs,setMsgs]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const [mobileSidebar,setMobileSidebar]=useState(false);
+  const endRef=useRef();
+  const plan=PLANS[user.plan];
+  const planColors={basic:'#64748b',intermediate:'#0ea5e9',premium:'#14b8a6',elite:'#a855f7'};
+
+  useEffect(()=>{endRef.current?.scrollIntoView({behavior:'smooth'})},[msgs,loading]);
+
+  async function handleSend(text) {
+    let conv=activeConv;
+    if(!conv) {
+      const id=crypto.randomUUID();
+      const title=text.slice(0,42)+(text.length>42?'…':'');
+      conv={id,title,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+      setActiveConv(conv);
+      const updated=[conv,...convs];
+      setConvs(updated); saveConvs(user.id,updated);
+    }
+    const uMsg={id:crypto.randomUUID(),role:'user',content:text,createdAt:new Date().toISOString()};
+    const newMsgs=[...msgs,uMsg];
+    setMsgs(newMsgs); saveMsgs(conv.id,newMsgs);
+    setLoading(true);
+    try {
+      const history=msgs.map(m=>({role:m.role,content:m.content}));
+      const aiText=await getAIResponse(text,history,user);
+      const aMsg={id:crypto.randomUUID(),role:'assistant',content:aiText,createdAt:new Date().toISOString()};
+      const final=[...newMsgs,aMsg];
+      setMsgs(final); saveMsgs(conv.id,final);
+      // Update conv title and timestamp
+      const updated=convs.map(c=>c.id===conv.id?{...c,updatedAt:new Date().toISOString()}:c);
+      if(!convs.find(c=>c.id===conv.id)) updated.unshift({...conv,updatedAt:new Date().toISOString()});
+      setConvs(updated); saveConvs(user.id,updated);
+    }catch(e){
+      const errMsg={id:crypto.randomUUID(),role:'assistant',content:'Ocurrió un error al procesar tu consulta. Intenta nuevamente.',createdAt:new Date().toISOString(),isError:true};
+      setMsgs(p=>[...p,errMsg]);
+    }finally{setLoading(false)}
+  }
+
+  function handleNewChat(){setActiveConv(null);setMsgs([]);setMobileSidebar(false)}
+  function handleSelectConv(conv){
+    setActiveConv(conv);
+    setMsgs(getMsgs(conv.id));
+    setMobileSidebar(false);
+  }
+  function handleDelete(cid){
+    const updated=convs.filter(c=>c.id!==cid);
+    setConvs(updated); saveConvs(user.id,updated);
+    localStorage.removeItem(`ami-m-${cid}`);
+    if(activeConv?.id===cid){setActiveConv(null);setMsgs([])}
+  }
+  function handleRename(cid,title){
+    const updated=convs.map(c=>c.id===cid?{...c,title}:c);
+    setConvs(updated); saveConvs(user.id,updated);
+  }
+
+  const sidebar=(close)=><SidebarComp user={user} convs={convs} activeId={activeConv?.id}
+    onNew={handleNewChat} onSelect={handleSelectConv} onDelete={handleDelete}
+    onRename={handleRename} onLogout={onLogout} dark={dark} onToggleDark={onToggleDark}
+    onClose={close||undefined}/>;
+
+  return (
+    <div className="app">
+      {sidebar(null)}
+      {/* Mobile sidebar */}
+      {mobileSidebar&&(
+        <div className="mobile-sidebar-overlay" style={{display:'flex'}}>
+          <div className="mobile-sidebar">{sidebar(()=>setMobileSidebar(false))}</div>
+          <div style={{flex:1}} onClick={()=>setMobileSidebar(false)}/>
+        </div>
+      )}
+      <div className="chat-area">
+        <div className="chat-header">
+          <div style={{display:'flex',alignItems:'center',gap:'.5rem'}}>
+            <button className="icon-btn" onClick={()=>setMobileSidebar(true)} style={{display:'none',padding:'.3rem'}} id="menu-btn">
+              <IconMenu/>
+            </button>
+            <div className="chat-title">
+              <div className="chat-title-icon">🛡️</div>
+              {activeConv?activeConv.title:'Ami'}
+            </div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:'.5rem'}}>
+            <span className="chat-plan-badge" style={{color:planColors[user.plan]}}>{plan?.name}</span>
+            <button className="icon-btn" onClick={onToggleDark} style={{display:'none'}} id="theme-mobile-btn">
+              {dark?<IconSun/>:<IconMoon/>}
+            </button>
+          </div>
+        </div>
+        <div className="messages-area">
+          {msgs.length===0
+            ? <WelcomeComp user={user}/>
+            : <div className="messages-inner">
+                {msgs.map(m=><MsgComp key={m.id} msg={m}/>)}
+                {loading&&<TypingComp/>}
+                <div ref={endRef}/>
+              </div>
+          }
+        </div>
+        <ChatInput onSend={handleSend} loading={loading} hasMessages={msgs.length>0}/>
+      </div>
+    </div>
+  )
+}
+
+// ── App Root ──────────────────────────────────────────────────────────────────
+
+function App() {
+  const [user,setUser]=useState(null);
+  const [checked,setChecked]=useState(false);
+  const [dark,setDark]=useState(()=>{
+    const s=localStorage.getItem('ami-theme');
+    return s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(()=>{
+    document.documentElement.classList.toggle('dark',dark);
+    localStorage.setItem('ami-theme',dark?'dark':'light');
+  },[dark]);
+
+  useEffect(()=>{
+    const s=getSession();
+    if(s) setUser(s);
+    setChecked(true);
+    // Show mobile buttons
+    document.getElementById('menu-btn')&&(document.getElementById('menu-btn').style.display='flex');
+    document.getElementById('theme-mobile-btn')&&(document.getElementById('theme-mobile-btn').style.display='flex');
+  },[]);
+
+  if(!checked) return (
+    <div style={{minHeight:'100vh',background:'#09090b',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <span className="spin spin-brand"/>
+    </div>
+  )
+
+  if(!user) return <LoginPage onLogin={s=>{saveSession(s);setUser(s)}}/>
+
+  return <ChatPage user={user} onLogout={()=>{clearSession();setUser(null)}} dark={dark} onToggleDark={()=>setDark(d=>!d)}/>
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
